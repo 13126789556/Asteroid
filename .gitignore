@@ -329,3 +329,7 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 Asteroid/Asteroid/Asteroid.vcxproj
+Asteroid/Asteroid/Asteroid.vcxproj
+Asteroid/Asteroid/Asteroid.vcxproj
+Asteroid/Asteroid/Asteroid.vcxproj
+*.vcxproj
