@@ -20,6 +20,13 @@ bool isStartMenu;
 bool isAIMode;
 bool isTestMode;
 
+enum GameStatus
+{
+	Menu, GameStart, GameOver
+};
+
+GameStatus gameStatus;
+
 float Magnitude(Vector2f v) {
 	return sqrt(v.x * v.x + v.y * v.y);
 }
@@ -109,36 +116,47 @@ int main()
 		}
 		fpsClock.restart();
 
-		//start menu
-		if (isStartMenu) {
-			deltaTime = Time().Zero;
-			if (Keyboard::isKeyPressed(Keyboard::A) && deltaTime == Time().Zero) {
-				isStartMenu = false;
+		//status machine
+		switch (gameStatus) {
+		case Menu:
+			//start menu
+			if (isStartMenu) {
+				deltaTime = Time().Zero;
+				if (Keyboard::isKeyPressed(Keyboard::A) && deltaTime == Time().Zero) {
+					isStartMenu = false;
+				}
+				else if (Keyboard::isKeyPressed(Keyboard::B) && deltaTime == Time().Zero) {
+					isStartMenu = false;
+				}
+				else if (Keyboard::isKeyPressed(Keyboard::T) && deltaTime == Time().Zero) {
+					ballSpeed = 10000;
+					isStartMenu = false;
+				}
 			}
-			else if (Keyboard::isKeyPressed(Keyboard::B) && deltaTime == Time().Zero) {
-				isStartMenu = false;
+			break;
+		case GameStart:
+			break;
+		case GameOver:
+			//if win 
+			if (score1 >= 5) {	//win detection
+				deltaTime = Time().Zero;
+				winUI.content = "			You Lose! \n\n press space to continue";
 			}
-			else if (Keyboard::isKeyPressed(Keyboard::T) && deltaTime == Time().Zero) {
-				ballSpeed = 10000;
-				isStartMenu = false;
+			if (score2 >= 5) {	//win detection
+				deltaTime = Time().Zero;
+				winUI.content = "			You Win! \n\n press space to continue";
 			}
+			if (Keyboard::isKeyPressed(Keyboard::Space) && deltaTime == Time().Zero) {
+				//score1 = score2 = 0;
+				score1UI.content = std::to_string(score1 = 0);
+				score2UI.content = std::to_string(score2 = 0);
+				isStartMenu = true;
+			}
+			break;
 		}
 
-		//if win 
-		if (score1 >= 5) {	//win detection
-			deltaTime = Time().Zero;
-			winUI.content = "			You Lose! \n\n press space to continue";
-		}
-		if (score2 >= 5) {	//win detection
-			deltaTime = Time().Zero;
-			winUI.content = "			You Win! \n\n press space to continue";
-		}
-		if (Keyboard::isKeyPressed(Keyboard::Space) && deltaTime == Time().Zero) {
-			//score1 = score2 = 0;
-			score1UI.content = std::to_string(score1 = 0);
-			score2UI.content = std::to_string(score2 = 0);
-			isStartMenu = true;
-		}
+
+
 
 		//ball collision detection
 
