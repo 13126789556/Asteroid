@@ -19,6 +19,6 @@ public:
 	UI(float characterSize, Vector2f position);
 	void setText(String s);
 	void Update();
-	void Draw(RenderWindow& win);
+	void Draw();
 };
 
