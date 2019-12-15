@@ -2,7 +2,7 @@
 class LevelManager
 {
 public:
-	int levelRank;
+	int levelRank, score;
 
 	LevelManager();
 	void NewLevel();

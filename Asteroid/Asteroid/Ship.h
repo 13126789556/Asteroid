@@ -4,6 +4,7 @@
 #include <SFML/Audio.hpp>
 #include <SFML/System.hpp>
 #include <SFML/Main.hpp>
+#include "SpriteAnimation.h"
 #include "Bullet.h"
 using namespace sf;
 class Ship
@@ -14,6 +15,7 @@ public:
 	int life;
 	Sprite sprite;
 	float degree;
+	bool isActive;
 	
 	Ship(float radius);
 	void Rotate(float rotateSpeed);

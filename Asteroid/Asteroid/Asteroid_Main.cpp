@@ -15,7 +15,7 @@
 using namespace sf;
 
 Vector2f winSize(1200,900);
-int fps, frameCount, score;
+int fps, frameCount;
 enum GameStatus
 {
 	Menu, GamePlay, Win, GameOver
@@ -38,18 +38,28 @@ Vector2f Lerp(Vector2f v1, Vector2f v2, float t) {
 	if (t > 1) { t = 1; }
 	return v1 * (1 - t) + v2 * t;
 }
-Texture shipTex, asteroidTex, bulletTex;
+Texture shipTex, asteroidTex, bulletTex, trailTex;
 RenderWindow window(VideoMode(winSize.x, winSize.y), "Asteroid!");
 float deltaTime;
 std::vector<Bullet> bullets;
 std::vector<Bullet>::iterator bulletsIt;
+std::vector<Bullet> enemyBullets;
+std::vector<Bullet>::iterator enemyBulletsIt;
 std::vector<Asteroid> asteroids;
 std::vector<Asteroid>::iterator asteroidsIt;
-Ship ship(30);
+std::vector<SpriteAnimation> explosions;
+std::vector<SpriteAnimation>::iterator explosionsIt;
+Ship player(30);
+Ship enemy(30);
+SpriteAnimation explosion = SpriteAnimation("Explosion.png", 4, 4, 15);
+SpriteAnimation trail("Trail.png", 6, 5, 30);
+AudioResource fire("Fire.wav");
+AudioResource destroy("Destroy.wav");
+AudioResource thrusting("Thrusting.wav");
 
 void Initial() {
 	winSize = Vector2f(1200, 900);
-	score = 0;
+	levelManager.score = 0;
 }
 
 int main()
@@ -58,7 +68,9 @@ int main()
 	shipTex.loadFromFile("Ship.png");
 	asteroidTex.loadFromFile("Asteroid.png");
 	bulletTex.loadFromFile("Bullet.png");
-	ship = Ship(30);
+	trailTex.loadFromFile("Trail.png");
+
+	player = Ship(30);
 
 	Initial();
 
@@ -72,13 +84,17 @@ int main()
 	UI fpsUI(20, Vector2f(winSize.x - 100, 0));
 	UI titleUI(90, Vector2f(winSize.x / 2 - 250, 200));
 	titleUI.content = "ASTEROID";
-	UI scoreUI(40, Vector2f(0, 0));
-	scoreUI.content = "Score: " + std::to_string(score);
+	UI scoreUI(40, Vector2f(winSize.x / 2 - 80, 0));
+	scoreUI.content = "Score: " + std::to_string(levelManager.score);
+	UI lifeUI(40, Vector2f(0, 0));
+	lifeUI.content = "Life: " + std::to_string(player.life);
 	UI gameOverUI(50, Vector2f(winSize.x / 2 - 280, winSize.y / 2 - 75));
 	gameOverUI.content = "You Lose! \n\npress Z to continue";
+	UI winUI(50, Vector2f(winSize.x / 2 - 280, winSize.y / 2 - 75));
+	winUI.content = "You win! \n\npress Z to next level";
 	UI menuUI(40, Vector2f(winSize.x / 2 - 220, winSize.y / 2 + 175));
 	menuUI.content = "Press Z to start new game\n\nPress Esc to exit";
-	   
+	
 	float time = 0;
 	Clock fpsClock, fpsUpdate;
 
@@ -119,18 +135,25 @@ int main()
 			if (Keyboard::isKeyPressed(Keyboard::Escape)) {
 				gameStatus = Menu;
 			}
-			//rotate
-			if (Keyboard::isKeyPressed(Keyboard::A)) { ship.Rotate(-2.5); }
-			else if (Keyboard::isKeyPressed(Keyboard::D)) { ship.Rotate(2.5); }
+			//ship rotate
+			if (Keyboard::isKeyPressed(Keyboard::A)) { player.Rotate(-7); }
+			else if (Keyboard::isKeyPressed(Keyboard::D)) { player.Rotate(7); }
 
 			//ship move
-			if (Keyboard::isKeyPressed(Keyboard::W)) { ship.Accelerate(180); }
-			else if (Keyboard::isKeyPressed(Keyboard::S)) { ship.Accelerate(-180); }
-			else { ship.Resistance(); }
-			ship.Warp();
+			if (Keyboard::isKeyPressed(Keyboard::W)) {
+				thrusting.isActive = false;
+				player.Accelerate(550);
+			}
+			else if (Keyboard::isKeyPressed(Keyboard::S)) { player.Accelerate(-550); }
+			else {
+				thrusting.isActive = true;
+				player.Resistance();
+			}
+			thrusting.Play();
+			player.Warp();
 
 			//fire
-			if (Keyboard::isKeyPressed(Keyboard::Space)) { ship.Fire(); }
+			if (Keyboard::isKeyPressed(Keyboard::Space)) { player.Fire(); }
 			
 			//bullets move
 			bulletsIt = bullets.begin();
@@ -144,6 +167,15 @@ int main()
 				}
 			}
 
+			////animation play once 
+			explosionsIt = explosions.begin();
+			while (explosionsIt != explosions.end()) {
+				if ((*explosionsIt).Play()) {
+					explosionsIt++;
+				}
+				else { explosionsIt = explosions.erase(explosionsIt); }
+			}
+
 			//asteroids move
 			asteroidsIt = asteroids.begin();
 			while (asteroidsIt != asteroids.end()) {
@@ -154,19 +186,30 @@ int main()
 
 			levelManager.CollisionDetection();
 
-			scoreUI.content = "Score: " + std::to_string(score);
+			scoreUI.content = "Score: " + std::to_string(levelManager.score);
+			lifeUI.content = "Life: " + std::to_string(player.life);
 			//GOTO
-			if (asteroids.size() == 0) { gameStatus = Win; }
-			else if (ship.life <= 0) { gameStatus = GameOver; }
+			if (asteroids.size() == 0 && explosions.size() == 0) { gameStatus = Win; }
+			else if (player.life <= 0) {
+				player.isActive = false;
+				if (explosions.size() == 0) {
+					gameStatus = GameOver;
+				}
+			}
 			break;
 		case Win:
-			levelManager.levelRank++;
+			if (Keyboard::isKeyPressed(Keyboard::Z)) {
+				levelManager.levelRank++;
+				player.life++;
+				levelManager.NewLevel();
+				gameStatus = GamePlay;
+			}
 			break;
 		case GameOver:
-			ship.life = 3;
+			player.life = 3;
 			levelManager.levelRank = 0;
 			if (Keyboard::isKeyPressed(Keyboard::Z)) {
-				scoreUI.content = "Score: " + std::to_string(score = 0);
+				scoreUI.content = "Score: " + std::to_string(levelManager.score = 0);
 				gameStatus = Menu;
 			}
 			break;
@@ -195,12 +238,15 @@ int main()
 			for (auto item : asteroids) {
 				item.Draw();
 			}
-			ship.Draw();
+			player.Draw();
+			for (auto item : explosions) {
+				item.Draw();
+			}
 			scoreUI.Draw();
+			lifeUI.Draw();
 			break;
 		case Win:
-
-			ship.Draw();
+			winUI.Draw();
 			scoreUI.Draw();
 			break;
 		case GameOver:
