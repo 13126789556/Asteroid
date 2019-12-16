@@ -11,11 +11,13 @@ class Ship
 {
 public:
 	Vector2f position, direction, velocity;
-	float  maxSpeed, rotateSpeed, radius, fireCoolDown;
+	float  maxSpeed, rotateSpeed, radius, fireCoolDown, invincibleRemain, spreadShotRemain, rapidShotRemain;
 	int life;
 	Sprite sprite;
 	float degree;
 	bool isActive;
+	//power up
+	bool invincible, spreadShot, rapidShot;
 	
 	Ship(float radius);
 	void Rotate(float rotateSpeed);

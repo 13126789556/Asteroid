@@ -154,6 +154,7 @@
     <ClCompile Include="AudioResource.cpp" />
     <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="LevelManager.cpp" />
+    <ClCompile Include="PowerUp.cpp" />
     <ClCompile Include="Ship.cpp" />
     <ClCompile Include="SpriteAnimation.cpp" />
     <ClCompile Include="UI.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="AudioResource.h" />
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="LevelManager.h" />
+    <ClInclude Include="PowerUp.h" />
     <ClInclude Include="Ship.h" />
     <ClInclude Include="SpriteAnimation.h" />
     <ClInclude Include="UI.h" />

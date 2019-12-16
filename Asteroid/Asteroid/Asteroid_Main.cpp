@@ -12,6 +12,7 @@
 #include "Asteroid.h"
 #include "vector"
 #include "LevelManager.h"
+#include "PowerUp.h"
 using namespace sf;
 
 Vector2f winSize(1200,900);
@@ -27,11 +28,14 @@ LevelManager levelManager;
 float Magnitude(Vector2f v) {
 	return sqrt(v.x * v.x + v.y * v.y);
 }
+float Dot(Vector2f v1, Vector2f v2) {
+	return v1.x * v2.x + v1.y * v2.y;
+}
 Vector2f Normalize(Vector2f v) {
 	return Magnitude(v) == 0 ? Vector2f(0, 0) : (v / Magnitude(v));
 }
-float Dot(Vector2f v1, Vector2f v2) {
-	return v1.x * v2.x + v1.y * v2.y;
+Vector2f Vector2Rotate(Vector2f v, float radian) {
+	return Vector2f(v.x * cos(radian) - v.y * sin(radian), v.x * sin(radian) + v.y * cos(radian));
 }
 Vector2f Lerp(Vector2f v1, Vector2f v2, float t) {
 	if (t < 0) { t = 0; }
@@ -49,6 +53,8 @@ std::vector<Asteroid> asteroids;
 std::vector<Asteroid>::iterator asteroidsIt;
 std::vector<SpriteAnimation> explosions;
 std::vector<SpriteAnimation>::iterator explosionsIt;
+std::vector<PowerUp> powerUps;
+std::vector<PowerUp>::iterator powerUpsIt;
 Ship player(30);
 Ship enemy(30);
 SpriteAnimation explosion = SpriteAnimation("Explosion.png", 4, 4, 15);
@@ -127,6 +133,7 @@ int main()
 				if ((menuEvent.type == sf::Event::KeyPressed) && (menuEvent.key.code == sf::Keyboard::Z)) {
 					levelManager.levelRank = 0;
 					levelManager.NewLevel();
+					player.isActive = true;
 					gameStatus = GamePlay;
 				}
 			}
@@ -141,15 +148,12 @@ int main()
 
 			//ship move
 			if (Keyboard::isKeyPressed(Keyboard::W)) {
-				thrusting.isActive = false;
 				player.Accelerate(550);
 			}
 			else if (Keyboard::isKeyPressed(Keyboard::S)) { player.Accelerate(-550); }
 			else {
-				thrusting.isActive = true;
 				player.Resistance();
 			}
-			thrusting.Play();
 			player.Warp();
 
 			//fire
@@ -189,7 +193,10 @@ int main()
 			scoreUI.content = "Score: " + std::to_string(levelManager.score);
 			lifeUI.content = "Life: " + std::to_string(player.life);
 			//GOTO
-			if (asteroids.size() == 0 && explosions.size() == 0) { gameStatus = Win; }
+			if (asteroids.size() == 0 && explosions.size() == 0) {
+				player.isActive = false;
+				gameStatus = Win;
+			}
 			else if (player.life <= 0) {
 				player.isActive = false;
 				if (explosions.size() == 0) {
@@ -202,6 +209,7 @@ int main()
 				levelManager.levelRank++;
 				player.life++;
 				levelManager.NewLevel();
+				player.isActive = true;
 				gameStatus = GamePlay;
 			}
 			break;
@@ -239,6 +247,9 @@ int main()
 				item.Draw();
 			}
 			player.Draw();
+			for (auto item : powerUps) {
+				item.Draw();
+			}
 			for (auto item : explosions) {
 				item.Draw();
 			}

@@ -1,0 +1,2 @@
+Only Bonus N
+I didn't use spatial data structure

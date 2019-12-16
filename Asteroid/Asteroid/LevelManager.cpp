@@ -4,6 +4,7 @@
 #include "Ship.h"
 #include "Bullet.h"
 #include "AudioResource.h"
+#include "PowerUp.h"
 
 extern float Magnitude(Vector2f v);
 extern Vector2f Normalize(Vector2f v);
@@ -17,6 +18,8 @@ extern std::vector<SpriteAnimation> explosions;
 extern RenderWindow window;
 extern SpriteAnimation explosion;
 extern AudioResource destroy;
+extern std::vector<PowerUp> powerUps;
+extern std::vector<PowerUp>::iterator powerUpsIt;
 
 LevelManager::LevelManager() {
 	levelRank = 0;
@@ -30,6 +33,7 @@ void LevelManager::NewLevel() {
 	player.isActive = true;
 	bullets.clear();
 	asteroids.clear();
+	powerUps.clear();
 	srand(time(0));
 	for (int i = 0; i < 2 + (int)(levelRank / 2); i++) {
 		Asteroid asteroid = Asteroid(Vector2f(rand() % 1200, rand() % 900),
@@ -51,14 +55,16 @@ void LevelManager::CollisionDetection() {
 	while (asteroidsIt != asteroids.end()) {
 		//asteroids and ship
 		if (Magnitude((*asteroidsIt).position - player.position) <= (*asteroidsIt).radius + player.radius) {
-			SpriteAnimation exp = explosion;
-			exp.position = player.position;
-			exp.color = Color(255, 130, 100, 255);
-			explosions.push_back(exp);
-			NewLevel();
-			player.life--;
-			destroy.Play();
-			return;
+			if (!player.invincible) {
+				SpriteAnimation exp = explosion;
+				exp.position = player.position;
+				exp.color = Color(255, 130, 100, 255);
+				explosions.push_back(exp);
+				NewLevel();
+				player.life--;
+				destroy.Play();
+				return;
+			}
 		}
 		//asteroids and bullets
 		bulletsIt = bullets.begin();
@@ -108,8 +114,48 @@ void LevelManager::CollisionDetection() {
 					asteroidsIt = asteroids.insert(asteroidsIt, asteroid);
 				}
 			}
+			//generate powerUp
+			if (rand() % 5 == 0) {
+				PowerUp powerUp = PowerUp(ast.position);
+				switch (rand()%3)
+				{
+				case 0:
+					powerUp.type = PowerUp::INVINCIBLE;
+					break;
+				case 1:
+					powerUp.type = PowerUp::SPREADSHOT;
+					break;
+				case 2:
+					powerUp.type = PowerUp::RAPIDSHOT;
+					break;
+				}
+				powerUps.push_back(powerUp);
+			}
 		}
 		else { asteroidsIt++; }
 		hitByBullet = false;
+	}
+
+	//player and powerups
+	powerUpsIt = powerUps.begin();
+	while (powerUpsIt != powerUps.end()) {
+		if (Magnitude(player.position - (*powerUpsIt).position) < player.radius + (*powerUpsIt).radius) {
+			switch ((*powerUpsIt).type)
+			{
+			case PowerUp::INVINCIBLE:
+				player.invincible = true;
+				break;
+			case PowerUp::SPREADSHOT:
+				player.spreadShot = true;
+				break;
+			case PowerUp::RAPIDSHOT:
+				player.rapidShot = true;
+				break;
+			}
+			powerUpsIt = powerUps.erase(powerUpsIt);
+		}
+		else {
+			powerUpsIt++;
+		}
 	}
 }

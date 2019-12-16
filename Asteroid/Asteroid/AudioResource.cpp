@@ -8,15 +8,18 @@ AudioResource::AudioResource(std::string resourceName) {
 }
 
 void AudioResource::Play() {
-	if (isActive == false) {
+	if (isActive) {
 		sound.play();
 	}
+	else { sound.stop(); }
 }
-
-//void AudioResource::Play() {
-//	sound.play();
-//}
-//
-//void AudioResource::Play() {
-//	sound.play();
-//}
+void AudioResource::PlayOnce() {
+	if (isActive) {
+		if (!isPlaying) { sound.play(); }
+		isPlaying = true;
+	}
+	else {
+		sound.stop();
+		isPlaying = false;
+	}
+}

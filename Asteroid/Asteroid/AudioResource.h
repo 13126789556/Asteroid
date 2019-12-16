@@ -7,9 +7,10 @@ class AudioResource
 public:
 	SoundBuffer buffer;
 	Sound sound;
-	bool isActive;
+	bool isActive, isPlaying;
 
 	AudioResource(std::string resourceName);
 	void Play();
+	void PlayOnce();
 };
 
